@@ -4,11 +4,13 @@ namespace app\controllers;
 
 use Yii;
 use yii\filters\AccessControl;
+use yii\helpers\Json;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use yii\db\Query;
 
 class SiteController extends Controller
 {
@@ -86,6 +88,54 @@ class SiteController extends Controller
         ]);
     }
 
+    public function actionSitelogin()
+    {
+        
+        $data = $_POST['LoginForm']['username'];  
+        $pass = $_POST['LoginForm']['password'];  
+        $Q1 = "select * from user1 where username='$data' and password='$pass'";
+        $rCreat  = Yii::$app->db->createCommand($Q1)->queryAll(); 
+        
+        if(count($rCreat)==0){
+            return $this->redirect(['index']);
+        }else
+        {
+            return $this->redirect(['siteuser']);
+        }
+    }
+
+    public function actionSiteregister()
+    {
+        
+        $data = $_POST['LoginForm']['username'];  
+        $pass = $_POST['LoginForm']['password'];  
+        $Qe = "INSERT INTO user1 (username, password) VALUES ('".$data."', '".$pass."')";
+        $rProj  =  Yii::$app->db->createCommand($Qe)->execute(); 
+        $last_id = Yii::$app->db->getLastInsertID($rProj);
+        return $this->redirect(['siteuser']);
+
+    }
+public function actionSiteuser()
+    {
+        
+        $query = (new Query())
+            -> select([
+                'user1.*'
+            ])
+            -> from('user1');
+        $countQuery = clone $query;
+        $models = $query->orderBy('user1.username ASC')
+                    ->all();
+        $data = Json::encode($models); 
+        if(isset($_GET['debug']))
+        {
+                header("Content-type:application/json");echo ($data);exit();
+        }
+            
+        return $this->render('user', array(
+                'data'=>$data
+            ));
+    }
     /**
      * Logout action.
      *
